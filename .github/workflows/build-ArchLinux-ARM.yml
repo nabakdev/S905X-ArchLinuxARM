@@ -33,11 +33,12 @@ jobs:
       - name: Download Arch Linux ARM tarball
         working-directory: ${{ env.WORKING_DIR }}
         run: |
-          axel -4n 5 ${{ env.DOWNLOAD_URL }} -o ArchLinuxARM-aarch64.tar.gz
+          axel -q4n 5 ${{ env.DOWNLOAD_URL }} -o ArchLinuxARM-aarch64.tar.gz
 
       - name: Build Arch Linux ARM Image
         id: build
         run: |
+          sudo chmod +x $GITHUB_WORKSPACE/build.sh
           echo "BUILD_DATE=$(date +"%m%d")" >> $GITHUB_ENV
           sudo -i cp -a $GITHUB_WORKSPACE/src ${{ env.WORKING_DIR }}
           sudo -i $GITHUB_WORKSPACE/build.sh
