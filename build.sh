@@ -55,17 +55,17 @@ make_image() {
 
   # TODO: Write device bootloader
 
-  mkdir -p mnt
+  mkdir -p mnt && sync
 
   if ! mount ${LOOP_DEV}p2 mnt; then
-    fdisk -l
+    # fdisk -l
     print_err "mount ${LOOP_DEV}p2 failed!"
   fi
 
-  mkdir -p mnt/boot
+  mkdir -p mnt/boot && sync
 
   if ! mount ${LOOP_DEV}p1 mnt/boot; then
-    fdisk -l
+    # fdisk -l
     print_err "mount ${LOOP_DEV}p1 failed!"
   fi
 
