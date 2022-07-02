@@ -1,22 +1,21 @@
 #!/bin/bash
 
+OUT_FILENAME="ArchLinuxARM-aarch64_S905X"
+
+ROOTFS_TYPE="ext4"
+
 SKIP_SIZE="68"
 BOOT_SIZE="256"
 ROOT_SIZE="2748"
-
-ROOTFS_TYPE="ext4"
+IMG_SIZE="$((SKIP_SIZE + BOOT_SIZE + ROOT_SIZE))"
 
 BOOT_LABEL="BOOT"
 ROOT_LABEL="ROOT"
 
-IMG_SIZE="$((SKIP_SIZE + BOOT_SIZE + ROOT_SIZE))"
-
-OUT_FILENAME="ArchLinuxARM-aarch64_S905X"
+IMG_FILENAME="${OUT_FILENAME}.img"
 WORKING_DIR="/tmp/BUILD_DIR"
 ARCHLINUXARM_TARBALL_FILE="${WORKING_DIR}/ArchLinuxARM-aarch64.tar.gz"
 OUT_DIR="${WORKING_DIR}/BUILD_OUT"
-IMG_FILENAME="${OUT_FILENAME}.img"
-
 BOOT_FILES="${WORKING_DIR}/src/boot-files"
 PATCH_FILES="${WORKING_DIR}/src/patch"
 
@@ -34,6 +33,7 @@ print_msg() {
 }
 
 make_image() {
+  mkdir -p ${OUT_DIR}
   dd if=/dev/zero of=${IMG_FILENAME} bs=2M count=${IMG_SIZE} conv=fsync >/dev/null 2>&1
   sync
 
