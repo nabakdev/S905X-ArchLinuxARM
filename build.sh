@@ -78,7 +78,7 @@ make_image() {
   losetup -d ${LOOP_DEV} 2>/dev/null
 
   # Compress build IMG and move the file
-  gzip -9 ${IMG_FILENAME} && sync && mv "${IMG_FILENAME}.gz" ${OUT_DIR}
+  tar c ${IMG_FILENAME} | gzip -9 > "${OUT_DIR}/${IMG_FILENAME}.tar.gz"
 }
 
 cd ${WORKING_DIR}
