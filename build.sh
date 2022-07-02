@@ -48,9 +48,9 @@ make_image() {
   mkfs.vfat -n ${BOOT_LABEL} ${LOOP_DEV}p1 >/dev/null 2>&1
 
   if [[ "${ROOTFS_TYPE}" == "btrfs" ]]; then
-    mkfs.btrfs -f -U ${ROOTFS_UUID} -L ${ROOT_LABEL} -m single ${LOOP_DEV}p2 >/dev/null 2>&1
+    mkfs.btrfs -f -L ${ROOT_LABEL} -m single ${LOOP_DEV}p2 >/dev/null 2>&1
   else
-    mkfs.ext4 -F -q -U ${ROOTFS_UUID} -L ${ROOT_LABEL} -m 0 ${LOOP_DEV}p2 >/dev/null 2>&1
+    mkfs.ext4 -F -q -L ${ROOT_LABEL} -m 0 ${LOOP_DEV}p2 >/dev/null 2>&1
   fi
 
   # TODO: Write device bootloader
