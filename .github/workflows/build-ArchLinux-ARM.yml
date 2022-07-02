@@ -22,10 +22,10 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo -E apt-get -qq update
-          sudo -E apt-get -qq install $REQUIRED_PACKAGES
-          sudo -E apt-get -qq autoremove --purge
-          sudo -E apt-get -qq clean
+          sudo -E apt-get -qq update > /dev/null
+          sudo -E apt-get -qq install $REQUIRED_PACKAGES > /dev/null
+          sudo -E apt-get -qq autoremove --purge > /dev/null
+          sudo -E apt-get -qq clean > /dev/null
           sudo timedatectl set-timezone "$TZ"
           sudo mkdir -p "$WORKING_DIR"
           sudo chown $USER:$GROUPS "$WORKING_DIR"
@@ -39,8 +39,8 @@ jobs:
         id: build
         run: |
           echo "BUILD_DATE=$(date +"%m%d")" >> $GITHUB_ENV
-          sudo -i cp -a src ${{ env.WORKING_DIR }}
-          sudo -i ./build.sh
+          sudo -i cp -a $GITHUB_WORKSPACE/src ${{ env.WORKING_DIR }}
+          sudo -i $GITHUB_WORKSPACE/build.sh
           echo "::set-output name=status::success"
 
       - name: Release the firmware
