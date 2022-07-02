@@ -13,7 +13,7 @@ BOOT_LABEL="BOOT"
 ROOT_LABEL="ROOT"
 
 IMG_FILENAME="${OUT_FILENAME}.img"
-WORKING_DIR="/tmp/BUILD_DIR"
+WORKING_DIR="/WORKING_DIR"
 ARCHLINUXARM_TARBALL_FILE="${WORKING_DIR}/ArchLinuxARM-aarch64.tar.gz"
 OUT_DIR="${WORKING_DIR}/BUILD_OUT"
 BOOT_FILES="${WORKING_DIR}/src/boot-files"
@@ -58,12 +58,14 @@ make_image() {
   mkdir -p mnt
 
   if ! mount ${LOOP_DEV}p2 mnt; then
+    fdisk -l
     print_err "mount ${LOOP_DEV}p2 failed!"
   fi
 
   mkdir -p mnt/boot
 
   if ! mount ${LOOP_DEV}p1 mnt/boot; then
+    fdisk -l
     print_err "mount ${LOOP_DEV}p1 failed!"
   fi
 
