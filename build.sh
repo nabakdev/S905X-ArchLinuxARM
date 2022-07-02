@@ -12,12 +12,14 @@ ROOT_LABEL="ROOT"
 IMG_SIZE="$((SKIP_SIZE + BOOT_SIZE + ROOT_SIZE))"
 
 OUT_FILENAME="ArchLinuxARM-aarch64_S905X"
-ARCHLINUXARM_TARBALL_FILE="ArchLinuxARM-aarch64.tar.gz"
-OUT_DIR="BUILD_OUT"
+WORKING_DIR="/tmp/BUILD_DIR"
+ARCHLINUXARM_TARBALL_FILE="${WORKING_DIR}/ArchLinuxARM-aarch64.tar.gz"
+OUT_DIR="${WORKING_DIR}/BUILD_OUT"
 IMG_FILENAME="${OUT_FILENAME}.img"
 
-BOOT_FILES="src/boot-files"
-PATCH_FILES="src/patch"
+BOOT_FILES="${WORKING_DIR}/src/boot-files"
+PATCH_FILES="${WORKING_DIR}/src/patch"
+
 
 # Create IMG file
 
@@ -36,7 +38,7 @@ make_image() {
   sync
 
   parted -s ${IMG_FILENAME} mklabel msdos 2>/dev/null
-  parted -s ${IMG_FILENAME} mkpart primary fat32 $((SKIP_SIZE))MiB $(SKIP_SIZE + BOOT_SIZE - 1)MiB 2>/dev/null
+  parted -s ${IMG_FILENAME} mkpart primary fat32 $((SKIP_SIZE))MiB $((SKIP_SIZE + BOOT_SIZE - 1))MiB 2>/dev/null
   parted -s ${IMG_FILENAME} mkpart primary ${ROOTFS_TYPE} $((SKIP_SIZE + BOOT_SIZE))MiB 100% 2>/dev/null
   sync
 
@@ -55,11 +57,11 @@ make_image() {
   mkdir -p mnt/boot
 
   if ! mount ${LOOP_DEV}p2 mnt; then
-    error_msg "mount ${LOOP_DEV}p2 failed!"
+    print_err "mount ${LOOP_DEV}p2 failed!"
   fi
 
   if ! mount ${LOOP_DEV}p1 mnt/boot; then
-    error_msg "mount ${LOOP_DEV}p1 failed!"
+    print_err "mount ${LOOP_DEV}p1 failed!"
   fi
 
   cp -a ${BOOT_FILES}/* mnt/boot
@@ -74,6 +76,6 @@ make_image() {
   gzip -9 ${IMG_FILENAME} && sync && mv "${IMG_FILENAME}.gz ${OUT_DIR}/"
 }
 
-mkdir /tmp/BUILD_DIR && cd $_
+cd ${WORKING_DIR}
 
 make_image
