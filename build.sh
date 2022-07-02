@@ -46,6 +46,7 @@ make_image() {
   [[ -n "${LOOP_DEV}" ]] || echo "losetup ${IMG_FILENAME} failed."
 
   mkfs.vfat -n ${BOOT_LABEL} ${LOOP_DEV}p1 >/dev/null 2>&1
+
   if [[ "${ROOTFS_TYPE}" == "btrfs" ]]; then
     mkfs.btrfs -f -U ${ROOTFS_UUID} -L ${ROOT_LABEL} -m single ${LOOP_DEV}p2 >/dev/null 2>&1
   else
@@ -54,11 +55,13 @@ make_image() {
 
   # TODO: Write device bootloader
 
-  mkdir -p mnt/boot
+  mkdir -p mnt
 
   if ! mount ${LOOP_DEV}p2 mnt; then
     print_err "mount ${LOOP_DEV}p2 failed!"
   fi
+
+  mkdir -p mnt/boot
 
   if ! mount ${LOOP_DEV}p1 mnt/boot; then
     print_err "mount ${LOOP_DEV}p1 failed!"
