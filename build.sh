@@ -69,16 +69,16 @@ make_image() {
     print_err "mount ${LOOP_DEV}p1 failed!"
   fi
 
-  cp -a ${BOOT_FILES}/* mnt/boot
+  cp -af ${BOOT_FILES}/* mnt/boot
   bsdtar -xpf ${ARCHLINUXARM_TARBALL_FILE} -C mnt
-  cp -a ${PATCH_FILES}/* mnt/
+  cp -af ${PATCH_FILES}/* mnt/
   sync
 
   umount -R -f mnt 2>/dev/null
   losetup -d ${LOOP_DEV} 2>/dev/null
 
   # Compress build IMG and move the file
-  gzip -9 ${IMG_FILENAME} && sync && mv "${IMG_FILENAME}.gz ${OUT_DIR}/"
+  gzip -9 ${IMG_FILENAME} && sync && mv "${IMG_FILENAME}.gz" ${OUT_DIR}
 }
 
 cd ${WORKING_DIR}
