@@ -28,6 +28,7 @@ jobs:
           sudo -E apt-get -qq clean
           sudo timedatectl set-timezone "$TZ"
           sudo mkdir -p "$WORKING_DIR"
+          sudo chown $USER:$GROUPS "$WORKING_DIR"
 
       - name: Download Arch Linux ARM tarball
         working-directory: ${{ env.WORKING_DIR }}
