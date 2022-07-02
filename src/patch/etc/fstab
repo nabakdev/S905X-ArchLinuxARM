@@ -1,0 +1,2 @@
+LABEL=BOOT	/boot	vfat	defaults				0 2
+LABEL=ROOT	/	ext4	defaults,noatime,errors=remount-ro	0 0
