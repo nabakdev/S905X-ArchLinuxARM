@@ -37,6 +37,7 @@ make_image() {
   dd if=/dev/zero of=${IMG_FILENAME} bs=1M count=${IMG_SIZE} conv=fsync >/dev/null 2>&1
   sync
 
+  print_msg "[1/5] Setup IMG File"
   parted -s ${IMG_FILENAME} mklabel msdos 2>/dev/null
   parted -s ${IMG_FILENAME} mkpart primary fat32 $((SKIP_SIZE))MiB $((SKIP_SIZE + BOOT_SIZE - 1))MiB 2>/dev/null
   parted -s ${IMG_FILENAME} mkpart primary ${ROOTFS_TYPE} $((SKIP_SIZE + BOOT_SIZE))MiB 100% 2>/dev/null
@@ -57,6 +58,7 @@ make_image() {
 
   mkdir -p mnt && sync
 
+  print_msg "[2/5] Mounting IMG File"
   if ! mount ${LOOP_DEV}p2 mnt; then
     # fdisk -l
     print_err "mount ${LOOP_DEV}p2 failed!"
@@ -69,6 +71,7 @@ make_image() {
     print_err "mount ${LOOP_DEV}p1 failed!"
   fi
 
+  print_msg "[3/5] Copying files"
   cp -af ${BOOT_FILES}/* mnt/boot
   bsdtar -xpf ${ARCHLINUXARM_TARBALL_FILE} -C mnt
   cp -af ${PATCH_FILES}/* mnt/
@@ -81,18 +84,19 @@ make_image() {
   rm mnt/boot/{Image.gz,initramfs-linux-fallback.img}
   find ./mnt/boot/dtbs -mindepth 1 ! -regex '^./mnt/boot/dtbs/amlogic\(/.*\)?' -delete
 
-  mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "S905 autoscript" -d mnt/boot/s905_autoscript.cmd mnt/boot/s905_autoscript
-  mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "eMMC autoscript" -d mnt/boot/emmc_autoscript.cmd mnt/boot/emmc_autoscript
-  mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "AML autoscript" -d mnt/boot/aml_autoscript.txt mnt/boot/aml_autoscript
-  mkimage -n "uInitrd Image" -A arm64 -O linux -T ramdisk -C none -d mnt/boot/initramfs-linux.img mnt/boot/uInitrd
-  mkimage -n "uImage" -A arm64 -O linux -T kernel -C none -a 0x1080000 -e 0x1080000 -d mnt/boot/Image mnt/boot/uImage
+  print_msg "[4/5] Setup Boot Files"
+  mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "S905 autoscript" -d mnt/boot/s905_autoscript.cmd mnt/boot/s905_autoscript 2>/dev/null
+  mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "eMMC autoscript" -d mnt/boot/emmc_autoscript.cmd mnt/boot/emmc_autoscript 2>/dev/null
+  mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "AML autoscript" -d mnt/boot/aml_autoscript.txt mnt/boot/aml_autoscript 2>/dev/null
+  mkimage -n "uInitrd Image" -A arm64 -O linux -T ramdisk -C none -d mnt/boot/initramfs-linux.img mnt/boot/uInitrd 2>/dev/null
+  mkimage -n "uImage" -A arm64 -O linux -T kernel -C none -a 0x1080000 -e 0x1080000 -d mnt/boot/Image mnt/boot/uImage 2>/dev/null
   sync
 
   umount -R -f mnt 2>/dev/null
   losetup -d ${LOOP_DEV} 2>/dev/null
 
-  # Compress build IMG and move the file
-  xz -9 ${IMG_FILENAME} > "${OUT_DIR}/${IMG_FILENAME}.xz"
+  print_msg "[5/5] Compress IMG File"
+  xz -9 ${IMG_FILENAME} && mv "${IMG_FILENAME}.xz" ${OUT_DIR}
 }
 
 cd ${WORKING_DIR}
