@@ -6,7 +6,7 @@ ROOTFS_TYPE="ext4"
 
 SKIP_SIZE="68"
 BOOT_SIZE="256"
-ROOT_SIZE="2748"
+ROOT_SIZE="1536"
 IMG_SIZE="$((SKIP_SIZE + BOOT_SIZE + ROOT_SIZE))"
 
 BOOT_LABEL="BOOT"
@@ -34,7 +34,7 @@ print_msg() {
 
 make_image() {
   mkdir -p ${OUT_DIR}
-  dd if=/dev/zero of=${IMG_FILENAME} bs=2M count=${IMG_SIZE} conv=fsync >/dev/null 2>&1
+  dd if=/dev/zero of=${IMG_FILENAME} bs=1M count=${IMG_SIZE} conv=fsync >/dev/null 2>&1
   sync
 
   parted -s ${IMG_FILENAME} mklabel msdos 2>/dev/null
@@ -72,13 +72,27 @@ make_image() {
   cp -af ${BOOT_FILES}/* mnt/boot
   bsdtar -xpf ${ARCHLINUXARM_TARBALL_FILE} -C mnt
   cp -af ${PATCH_FILES}/* mnt/
+
+  # Modify mkinitcpio
+  sed -i "s/PRESETS=.*/PRESETS=('default')/" mnt/etc/mkinitcpio.d/linux-aarch64.preset
+  sed -i '/^[^#]/ s/\(^fallback_.*$\)/#\1/' mnt/etc/mkinitcpio.d/linux-aarch64.preset
+
+  # cleaning up
+  rm mnt/boot/{Image.gz,initramfs-linux-fallback.img}
+  find ./mnt/boot/dtbs -mindepth 1 ! -regex '^./mnt/boot/dtbs/amlogic\(/.*\)?' -delete
+
+  mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "S905 autoscript" -d mnt/boot/s905_autoscript.cmd mnt/boot/s905_autoscript
+  mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "eMMC autoscript" -d mnt/boot/emmc_autoscript.cmd mnt/boot/emmc_autoscript
+  mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "AML autoscript" -d mnt/boot/aml_autoscript.txt mnt/boot/aml_autoscript
+  # mkimage -n "uInitrd Image" -A arm64 -O linux -T ramdisk -C none -d mnt/boot/initramfs-linux.img mnt/boot/uInitrd
+  # mkimage -n "uImage" -A arm64 -O linux -T kernel -C none -a 0x1080000 -e 0x1080000 -d mnt/boot/Image mnt/boot/uImage
   sync
 
   umount -R -f mnt 2>/dev/null
   losetup -d ${LOOP_DEV} 2>/dev/null
 
   # Compress build IMG and move the file
-  tar c ${IMG_FILENAME} | gzip -9 > "${OUT_DIR}/${IMG_FILENAME}.tar.gz"
+  xz -9 > "${OUT_DIR}/${IMG_FILENAME}.xz"
 }
 
 cd ${WORKING_DIR}

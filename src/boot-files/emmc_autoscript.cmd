@@ -1,8 +1,9 @@
-if fatload mmc 1 0x1000000 u-boot.emmc; then go 0x1000000; fi;
-setenv dtb_addr 0x1000000
 setenv env_addr 0x1040000
-setenv kernel_addr 0x11000000
 setenv initrd_addr 0x13000000
-setenv boot_start booti ${kernel_addr} ${initrd_addr} ${dtb_addr}
-setenv addmac 'if printenv mac; then setenv bootargs ${bootargs} mac=${mac}; elif printenv eth_mac; then setenv bootargs ${bootargs} mac=${eth_mac}; elif printenv ethaddr; then setenv bootargs ${bootargs} mac=${ethaddr}; fi'
-if fatload mmc 1 ${env_addr} uEnv.txt && env import -t ${env_addr} ${filesize}; setenv bootargs ${APPEND}; then if fatload mmc 1 ${kernel_addr} ${LINUX}; then if fatload mmc 1 ${initrd_addr} ${INITRD}; then if fatload mmc 1 ${dtb_addr} ${FDT}; then run addmac; run boot_start; fi; fi; fi; fi;
+setenv boot_start 'bootm ${loadaddr} ${initrd_addr} ${dtb_mem_addr}'
+setenv addmac 'if printenv mac; then setenv bootargs ${bootargs} mac=${mac}; elif printenv eth_mac; then setenv bootargs ${bootargs} mac=${eth_mac}; fi'
+setenv try_boot_start 'if fatload ${devtype} ${devnum} ${loadaddr} uImage; then if fatload ${devtype} ${devnum} ${initrd_addr} uInitrd; then fatload ${devtype} ${devnum} ${env_addr} uEnv.ini && env import -t ${env_addr} ${filesize} && run addmac; fatload ${devtype} ${devnum} ${dtb_mem_addr} ${dtb_name} && run boot_start; fi;fi'
+setenv devtype mmc
+setenv devnum 1
+run try_boot_start
+
