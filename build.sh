@@ -92,7 +92,7 @@ make_image() {
   losetup -d ${LOOP_DEV} 2>/dev/null
 
   # Compress build IMG and move the file
-  xz -9 > "${OUT_DIR}/${IMG_FILENAME}.xz"
+  xz -9 ${IMG_FILENAME} > "${OUT_DIR}/${IMG_FILENAME}.xz"
 }
 
 cd ${WORKING_DIR}
