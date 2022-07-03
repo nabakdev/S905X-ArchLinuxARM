@@ -84,8 +84,8 @@ make_image() {
   mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "S905 autoscript" -d mnt/boot/s905_autoscript.cmd mnt/boot/s905_autoscript
   mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "eMMC autoscript" -d mnt/boot/emmc_autoscript.cmd mnt/boot/emmc_autoscript
   mkimage -A arm64 -O linux -T script -C none -a 0 -e 0 -n "AML autoscript" -d mnt/boot/aml_autoscript.txt mnt/boot/aml_autoscript
-  # mkimage -n "uInitrd Image" -A arm64 -O linux -T ramdisk -C none -d mnt/boot/initramfs-linux.img mnt/boot/uInitrd
-  # mkimage -n "uImage" -A arm64 -O linux -T kernel -C none -a 0x1080000 -e 0x1080000 -d mnt/boot/Image mnt/boot/uImage
+  mkimage -n "uInitrd Image" -A arm64 -O linux -T ramdisk -C none -d mnt/boot/initramfs-linux.img mnt/boot/uInitrd
+  mkimage -n "uImage" -A arm64 -O linux -T kernel -C none -a 0x1080000 -e 0x1080000 -d mnt/boot/Image mnt/boot/uImage
   sync
 
   umount -R -f mnt 2>/dev/null
