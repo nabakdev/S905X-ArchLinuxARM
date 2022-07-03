@@ -74,9 +74,13 @@ make_image() {
   cp -af ${BOOT_FILES}/* mnt/boot
   bsdtar -xpf ${ARCHLINUXARM_TARBALL_FILE} -C mnt
   cp -af ${PATCH_FILES}/* mnt/
+  [ -f ${WORKING_DIR}/lscolors.sh ] && cp ${WORKING_DIR}/lscolors.sh mnt/etc && chmod +x mnt/etc/lscolors.sh
+
+  cat mnt/etc/_bashrc >> mnt/etc/bash.bashrc && rm mnt/etc/_bashrc
 
   # Modify mkinitcpio
   sed -i "s/PRESETS=.*/PRESETS=('default')/" mnt/etc/mkinitcpio.d/linux-aarch64.preset
+  sed -i 's/ALL_kver=.*/ALL_kver="\/boot\/Image"/' mnt/etc/mkinitcpio.d/linux-aarch64.preset
   sed -i '/^[^#]/ s/\(^fallback_.*$\)/#\1/' mnt/etc/mkinitcpio.d/linux-aarch64.preset
 
   # cleaning up

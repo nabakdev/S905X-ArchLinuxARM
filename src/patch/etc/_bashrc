@@ -1,0 +1,25 @@
+# bash config
+export HISTFILESIZE=5000
+export HISTSIZE=250
+export HISTCONTROL=erasedups:ignoredups:ignorespace
+
+shopt -s checkwinsize
+shopt -s histappend
+PROMPT_COMMAND='history -a'
+
+export CLICOLOR=1
+
+# color
+alias diff='diff --color=auto'
+alias grep='grep --color=auto'
+alias ip='ip -color=auto'
+alias ls='ls --color=auto'
+
+export LESS='-R --use-color -Dd+r$Du+b'
+export MANPAGER="less -R --use-color -Dd+r -Du+b"
+
+# shortcut
+alias la='ls -A'
+alias ll='ls -l'
+
+[ -f /etc/lscolors.sh ] && source "/etc/lscolors.sh"

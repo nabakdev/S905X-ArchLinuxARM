@@ -1,0 +1,132 @@
+#!/bin/bash
+
+if ! [ -x "$(command -v parted)" ]; then
+  echo 'Error: parted is not installed.' >&2
+  exit 1
+fi
+
+if ! [ -x "$(command -v rsync)" ]; then
+  echo 'Error: rsync is not installed.' >&2
+  exit 1
+fi
+
+if ! [ -x "$(command -v mkfs.vfat)" ]; then
+  echo 'Error: dosfstools is not installed.' >&2
+  exit 1
+fi
+
+if ! [ -x "$(command -v mkfs.ext4)" ]; then
+  echo 'Error: e2fsprogs is not installed.' >&2
+  exit 1
+fi
+
+function pprint() {
+    echo -ne "\e[37m${1}\e[39m"
+}
+
+function status_text() {
+    if [ $1 -eq 0 ]; then
+      echo -e " \e[32m[OK]\e[39m"
+    else
+      echo -e " \e[31m[FAIL]\e[39m"
+    fi
+}
+
+SKIP=700
+BOOT=256
+DEFAULT_UBOOT=/root/default-uboot.img
+EMMC_MNT=/mnt/eMMC
+EMMC="/dev/$(lsblk -l -o NAME | grep -oE '(mmcblk[0-9]?boot0)' | sed "s/boot0//g")"
+EMMC_BOOT="${EMMC}p1"
+EMMC_ROOT="${EMMC}p2"
+
+read -p "[?] Hostname: " DEFINED_HOSTNAME
+DEFINED_HOSTNAME="$(echo -e "${DEFINED_HOSTNAME}" | tr -d '[:space:]')"
+CURRENT_HOSTNAME="$(cat /etc/hostname | sed -e 's/^[[:space:]]*//')"
+
+rm -rf /boot/LOST.DIR >/dev/null 2>&1
+
+pprint "[+] eMMC found: $EMMC\n"
+
+umount $EMMC?* >/dev/null 2>&1
+
+pprint "[+] Start installing to $EMMC\n"
+
+pprint "[+] Backup u-boot to $DEFAULT_UBOOT"
+dd if="${EMMC}" of="$DEFAULT_UBOOT" bs=1M count=4 conv=fsync > /dev/null 2>&1
+status_text $?
+sync
+
+pprint "[+] Update eMMC partition\n"
+
+pprint "    > Zero the beginning of the eMMC"
+dd if=/dev/zero of=${EMMC} bs=512 count=1 conv=fsync > /dev/null 2>&1
+status_text $?
+sync
+
+pprint "    > Format eMMC to msdos"
+parted -s "${EMMC}" mklabel msdos > /dev/null 2>&1
+status_text $?
+sync
+pprint "    > Create boot partition"
+parted -s "${EMMC}" mkpart primary fat32 $((SKIP * 1024 * 1024))b $(((SKIP + BOOT) * 1024 * 1024 - 1))b > /dev/null 2>&1
+status_text $?
+sync
+pprint "    > Create root partition"
+parted -s "${EMMC}" mkpart primary ext4 $(((SKIP + BOOT) * 1024 * 1024))b 100% > /dev/null 2>&1
+status_text $?
+sync
+
+pprint "[+] Restore u-boot"
+dd if="$DEFAULT_UBOOT" of="${EMMC}" conv=fsync bs=1 count=442 > /dev/null 2>&1
+dd if="$DEFAULT_UBOOT" of="${EMMC}" conv=fsync bs=512 skip=1 seek=1 > /dev/null 2>&1
+status_text $?
+sync
+
+pprint "[+] Formatting EMMC partition"
+mkfs.vfat -F32 -n "BOOT_EMMC" "$EMMC_BOOT" > /dev/null 2>&1
+mkfs.ext4 -O ^metadata_csum,^64bit -F -L "ROOT_EMMC" "$EMMC_ROOT" > /dev/null 2>&1
+status_text $?
+sync
+
+pprint "[+] Mounting '$EMMC' partition to '$EMMC_MNT'"
+if [ -d ${EMMC_MNT} ]; then
+    rm -rf ${EMMC_MNT}
+fi
+mkdir -p ${EMMC_MNT}
+mount "$EMMC_ROOT" "$EMMC_MNT" > /dev/null 2>&1
+mkdir -p "${EMMC_MNT}/boot"
+mount "$EMMC_BOOT" "$EMMC_MNT/boot" > /dev/null 2>&1
+status_text $?
+sync
+
+pprint "[+] Copying files to EMMC\n"
+rsync -axHAWXS --numeric-ids --info=progress2 / "$EMMC_MNT/"
+rsync -axHAWXS --numeric-ids --info=progress2 /boot/ "$EMMC_MNT/boot/"
+sync
+
+pprint "[+] Updating configs"
+cat >${EMMC_MNT}/etc/fstab <<EOF
+LABEL=ROOT_EMMC       /               ext4            defaults,noatime,errors=remount-ro     0 1
+LABEL=BOOT_EMMC 	/boot           vfat        defaults,noatime,errors=remount-ro     0 2
+EOF
+
+sed -i "s|${CURRENT_HOSTNAME}|${DEFINED_HOSTNAME}|g" "${EMMC_MNT}/etc/hosts"
+sed -i "s|${CURRENT_HOSTNAME}|${DEFINED_HOSTNAME}|g" "${EMMC_MNT}/etc/hostname"
+
+sed -i "s|ROOT|ROOT_EMMC|g" "${EMMC_MNT}/boot/extlinux/extlinux.conf"
+
+if [ -f "${EMMC_MNT}/boot/u-boot.ext" ]; then
+  cp "${EMMC_MNT}/boot/u-boot.ext" "${EMMC_MNT}/boot/u-boot.emmc"
+  sed -i "s|u-boot.ext|u-boot.emmc|g" "${EMMC_MNT}/boot/boot.ini"
+fi 
+
+status_text $?
+sync
+
+umount -R "$EMMC_MNT" >/dev/null 2>&1
+rm -r "$EMMC_MNT"
+status_text $?
+
+pprint "[+] DONE\n"
+sync
