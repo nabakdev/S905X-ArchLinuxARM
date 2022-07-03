@@ -29,7 +29,6 @@ print_err() {
 
 print_msg() {
   echo -e "${1}"
-  exit 1
 }
 
 make_image() {
