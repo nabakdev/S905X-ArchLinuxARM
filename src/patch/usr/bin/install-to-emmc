@@ -86,6 +86,7 @@ sync
 pprint "[+] Formatting EMMC partition"
 mkfs.vfat -F32 -n "BOOT_EMMC" "$EMMC_BOOT" > /dev/null 2>&1
 mkfs.ext4 -O ^metadata_csum,^64bit -F -L "ROOT_EMMC" "$EMMC_ROOT" > /dev/null 2>&1
+tune2fs -O fast_commit $EMMC_ROOT > /dev/null 2>&1
 status_text $?
 sync
 
@@ -107,8 +108,8 @@ sync
 
 pprint "[+] Updating configs"
 cat >${EMMC_MNT}/etc/fstab <<EOF
-LABEL=ROOT_EMMC       /               ext4            defaults,noatime,errors=remount-ro     0 1
-LABEL=BOOT_EMMC 	/boot           vfat        defaults,noatime,errors=remount-ro     0 2
+LABEL=ROOT_EMMC       /               ext4            defaults,noatime,errors=remount-ro,commit=60     0 1
+LABEL=BOOT_EMMC 	/boot           vfat        defaults,noatime,errors=remount-ro,commit=60     0 2
 EOF
 
 sed -i "s|${CURRENT_HOSTNAME}|${DEFINED_HOSTNAME}|g" "${EMMC_MNT}/etc/hosts"

@@ -50,7 +50,7 @@ make_image() {
   if [[ "${ROOTFS_TYPE}" == "btrfs" ]]; then
     mkfs.btrfs -f -L ${ROOT_LABEL} -m single ${LOOP_DEV}p2 >/dev/null 2>&1
   else
-    mkfs.ext4 -F -q -L ${ROOT_LABEL} -m 0 ${LOOP_DEV}p2 >/dev/null 2>&1
+    mkfs.ext4 -O ^metadata_csum,^64bit -F -q -L ${ROOT_LABEL} -m 0 ${LOOP_DEV}p2 >/dev/null 2>&1
   fi
 
   # TODO: Write device bootloader
