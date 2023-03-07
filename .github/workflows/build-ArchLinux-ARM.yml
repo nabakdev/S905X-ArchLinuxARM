@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Environment
         env:
@@ -43,11 +43,11 @@ jobs:
           echo "BUILD_DATE=$(date +"%m%d")" >> $GITHUB_ENV
           sudo -i cp -a $GITHUB_WORKSPACE/src ${{ env.WORKING_DIR }}/src
           sudo -i $GITHUB_WORKSPACE/build.sh
-          echo "::set-output name=status::success"
+          echo "status=success" >> ${GITHUB_OUTPUT}
 
       - name: Release the firmware
         uses: ncipollo/release-action@main
-        if: steps.build.outputs.status == 'success' && !cancelled()
+        if: ${{ steps.build.outputs.status }} == 'success' && !cancelled()
         with:
           tag: ArchLinuxARM-aarch64_${{ env.BUILD_DATE }}
           artifacts: ${{ env.WORKING_DIR }}/BUILD_OUT/*
